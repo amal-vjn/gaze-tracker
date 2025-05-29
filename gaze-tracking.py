@@ -12,6 +12,8 @@ import pyautogui
 from PIL import Image, ImageDraw, ImageFont
 import os
 import shutil
+import tkinter as tk
+from tkinter import messagebox
 
 # Initialize MediaPipe Face Mesh
 mp_face_mesh = mp.solutions.face_mesh
@@ -39,8 +41,75 @@ def writeToCsv(content):
     with open('iris_data.csv', 'a') as f:
         f.write(content +'\n')
 
+
+
+def get_user_details():
+
+    def warning_window():
+        warning_win = tk.Tk()
+        warning_win.title("⚠️ Data Usage Notice")
+        warning_win.geometry("1050x450")
+        tk.Label(warning_win, text="⚠️ Research Project - Focus", font=("Helvetica", 16, "bold"), fg="black").pack(pady=10)
+        tk.Label(warning_win, text="This program tries to access your webcam and track your eye movements. It will save the data to a CSV file and upload it to a remote server.", fg="black", wraplength=1000).pack(pady=(0, 10))
+        tk.Label(warning_win, text="Make sure the webcam is connected and working. Make sure the webcam is not being used by another application.", fg="black",wraplength=1000).pack(pady=(0, 10))
+        tk.Label(warning_win, text="Press Ctrl+C to exit the program after your lerning session is completed.", fg="black", wraplength=1000).pack(pady=(0, 10))
+        tk.Button(warning_win, text="OK", command=warning_win.destroy, width=15).pack()
+        warning_win.mainloop()
+
+    def on_close():
+        messagebox.showwarning("Action Blocked", "Please submit the form before closing.")
+
+    def submit_info():
+        name = name_entry.get()
+        roll = roll_entry.get()
+        class_name = class_entry.get()
+        school = school_entry.get()
+
+        if not name or not roll or not class_name or not school:
+            messagebox.showerror("Input Error", "All fields are required.")
+            return
+        
+        info = f"Name: {name}\nRoll Number: {roll}\nClass: {class_name}\nSchool: {school}"
+
+        with open('details.csv', 'a') as f:
+            f.write(info +'\n')
+
+        root.destroy()
+        warning_window()
+
+    
+
+    print("Please enter your details to proceed with the eye gaze tracking application.")
+    root = tk.Tk()
+    root.title("Please submit your student details")
+    root.geometry("1050x500")
+    root.protocol("WM_DELETE_WINDOW", on_close)
+
+    # UI Labels and Entries
+    tk.Label(root, text="Name:").pack(pady=(10, 0))
+    name_entry = tk.Entry(root, width=40)
+    name_entry.pack()
+
+    tk.Label(root, text="Roll Number:").pack(pady=(10, 0))
+    roll_entry = tk.Entry(root, width=40)
+    roll_entry.pack()
+
+    tk.Label(root, text="Class:").pack(pady=(10, 0))
+    class_entry = tk.Entry(root, width=40)
+    class_entry.pack()
+
+    tk.Label(root, text="School:").pack(pady=(10, 0))
+    school_entry = tk.Entry(root, width=40)
+    school_entry.pack()
+
+    # Submit button
+    submit_btn = tk.Button(root, text="Submit", command=submit_info)
+    submit_btn.pack(pady=20)
+    root.mainloop()
+
 def generateZip():
     with zipfile.ZipFile('iris_data.zip', 'w') as zipf:
+        zipf.write('details.csv')
         zipf.write('iris_data.csv')
         screenshots_dir = 'screenshots'
         if os.path.exists(screenshots_dir) and os.path.isdir(screenshots_dir):
@@ -73,6 +142,7 @@ def uploadZip():
                     shutil.rmtree(screenshots_dir)
                     os.remove('iris_data.zip')
                     os.remove('iris_data.csv')
+                    os.remove('details.csv')
                 except OSError as e:
                     print(f"Error deleting files: {e}")
         else:
@@ -159,11 +229,9 @@ def main():
         uploadZip()
         return
 
+    get_user_details()
     #  Webcam warnings - 
     print('Research Project - Eye Gaze Tracking')
-    print("This program tries to access your webcam and track your eye movements. It will save the data to a CSV file and upload it to a remote server.")
-    print("Webcam warnings - 1. Make sure the webcam is connected and working. 2. Make sure the webcam is not being used by another application.")
-    print("Press Ctrl+C to stop the program")
 
     # Create screenshots folder if it doesn't exist
     screenshots_dir = "screenshots"
